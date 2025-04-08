@@ -10,7 +10,7 @@ const generateNodePosition = (existingNodes: WalletNode[]): { x: number, y: numb
   const baseY = 300 + Math.random() * 200 - 100;
   
   // Ensure there's no overlap with existing nodes
-  const nodeRadius = 50; // Approx node radius
+  const nodeRadius = 80; // Approx node width/2
   const minDistance = nodeRadius * 2.5; // Minimum distance between nodes
   
   let x = baseX;
@@ -41,6 +41,58 @@ const generateNodePosition = (existingNodes: WalletNode[]): { x: number, y: numb
   };
 };
 
+// Calculates optimal position for a new node based on its connections
+const calculateOptimalPosition = (
+  address: string,
+  existingNodes: WalletNode[],
+  connectingNodes: WalletNode[]
+): { x: number, y: number } => {
+  // If no connecting nodes, just find a non-overlapping position
+  if (connectingNodes.length === 0) {
+    return generateNodePosition(existingNodes);
+  }
+  
+  // Calculate average position of connecting nodes
+  let sumX = 0;
+  let sumY = 0;
+  
+  connectingNodes.forEach(node => {
+    sumX += node.x;
+    sumY += node.y;
+  });
+  
+  const avgX = sumX / connectingNodes.length;
+  const avgY = sumY / connectingNodes.length;
+  
+  // Start with the average position
+  let x = avgX + (Math.random() * 200 - 100);
+  let y = avgY + (Math.random() * 200 - 100);
+  
+  // Try to avoid overlaps
+  const nodeWidth = 160;
+  const minDistance = nodeWidth * 1.2;
+  let attempts = 0;
+  
+  while (attempts < 30) {
+    const overlaps = existingNodes.some(node => {
+      const distance = Math.sqrt(Math.pow(node.x - x, 2) + Math.pow(node.y - y, 2));
+      return distance < minDistance;
+    });
+    
+    if (!overlaps) {
+      return { x, y };
+    }
+    
+    // Try slight variations of the position
+    x = avgX + (Math.random() * 300 - 150);
+    y = avgY + (Math.random() * 300 - 150);
+    attempts++;
+  }
+  
+  // If still overlapping, try a completely different position
+  return generateNodePosition(existingNodes);
+};
+
 const initialState: AppState = {
   graph: {
     nodes: [],
@@ -52,7 +104,7 @@ const initialState: AppState = {
     translateY: 0
   },
   selectedNode: null,
-  theme: 'light'
+  theme: 'dark' // Default to dark theme
 };
 
 export const walletSlice = createSlice({
@@ -66,12 +118,22 @@ export const walletSlice = createSlice({
       const existingNode = state.graph.nodes.find(node => node.address === beneficiary_address);
       
       if (!existingNode) {
-        const position = generateNodePosition(state.graph.nodes);
+        // Find nodes that might have connections with this new node
+        const connectedNodes = state.graph.nodes.filter(node => {
+          // Check if any transaction in this node matches with the new node's transactions
+          return transactions.some(tx => 
+            node.transactions.some(nodeTx => nodeTx.transaction_id === tx.transaction_id)
+          );
+        });
+        
+        // Calculate the optimal position based on connected nodes
+        const position = calculateOptimalPosition(beneficiary_address, state.graph.nodes, connectedNodes);
+        
         const newNode: WalletNode = {
           id: uuidv4(),
           address: beneficiary_address,
           amount,
-          entityName: entity_name,
+          entityName: entity_name || 'Unknown',
           tokenType: token_type,
           transactionType: transaction_type,
           x: position.x,
@@ -80,6 +142,46 @@ export const walletSlice = createSlice({
         };
         
         state.graph.nodes.push(newNode);
+        
+        // Create edges for all connections
+        connectedNodes.forEach(connectedNode => {
+          // Determine if this is an inflow or outflow
+          const matchingTx = transactions.find(tx => 
+            connectedNode.transactions.some(nodeTx => nodeTx.transaction_id === tx.transaction_id)
+          );
+          
+          if (matchingTx) {
+            const edgeExists = state.graph.edges.some(
+              edge => (edge.source === connectedNode.id && edge.target === newNode.id) ||
+                     (edge.target === connectedNode.id && edge.source === newNode.id)
+            );
+            
+            if (!edgeExists) {
+              const newEdge: Edge = {
+                id: uuidv4(),
+                // If the connected node has the transaction in its outflow, it's an inflow to the new node
+                source: connectedNode.id,
+                target: newNode.id,
+                type: 'inflow', // Default to inflow, can be refined with more data
+                amount: matchingTx.tx_amount,
+                transaction_id: matchingTx.transaction_id
+              };
+              
+              state.graph.edges.push(newEdge);
+            }
+          }
+        });
+      } else {
+        // Update the existing node with new transactions if needed
+        const updatedTransactions = [
+          ...existingNode.transactions,
+          ...transactions.filter(tx => 
+            !existingNode.transactions.some(existingTx => existingTx.transaction_id === tx.transaction_id)
+          )
+        ];
+        
+        existingNode.transactions = updatedTransactions;
+        existingNode.amount = amount; // Update amount
       }
     },
     

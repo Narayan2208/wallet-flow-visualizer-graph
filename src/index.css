@@ -98,7 +98,7 @@
 /* Custom styles for the wallet flow visualizer */
 @layer components {
   .graph-container {
-    @apply relative w-full h-full overflow-hidden bg-muted/30;
+    @apply relative w-full h-full overflow-hidden bg-black;
   }
   
   .wallet-node {
@@ -106,23 +106,42 @@
   }
   
   .wallet-node:hover {
-    @apply opacity-90 shadow-lg;
+    @apply opacity-90;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
   }
   
   .wallet-node.selected {
-    @apply animate-node-selected ring-2 ring-primary;
+    @apply animate-node-selected;
+    filter: drop-shadow(0 0 12px rgba(79, 139, 250, 0.7));
+  }
+  
+  .wallet-node-connector {
+    @apply cursor-pointer transition-all duration-200;
+  }
+  
+  .wallet-node-connector:hover {
+    @apply opacity-90;
+    transform: scale(1.2);
   }
   
   .edge {
     @apply transition-all duration-200;
+    stroke-linecap: round;
+  }
+  
+  .edge:hover {
+    @apply opacity-90;
+    stroke-width: 3;
   }
   
   .inflow-edge {
     @apply stroke-inflow;
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.5));
   }
   
   .outflow-edge {
     @apply stroke-outflow;
+    filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.5));
   }
   
   .inflow-node {
@@ -135,5 +154,23 @@
 
   .sidebar-container {
     @apply fixed top-0 h-full bg-card shadow-lg transition-all duration-300 ease-in-out overflow-auto;
+  }
+  
+  /* Add minimap styling */
+  .minimap {
+    @apply rounded-md overflow-hidden shadow-md opacity-80 transition-opacity duration-200;
+  }
+  
+  .minimap:hover {
+    @apply opacity-100;
+  }
+  
+  /* Controls styling */
+  .controls {
+    @apply rounded-md overflow-hidden shadow-md opacity-80 transition-opacity duration-200;
+  }
+  
+  .controls:hover {
+    @apply opacity-100;
   }
 }

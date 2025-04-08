@@ -4,6 +4,7 @@
 export interface Transaction {
   tx_amount: number;
   transaction_id: string;
+  date_time?: string;
 }
 
 export interface WalletNode {
@@ -45,6 +46,7 @@ export interface WalletData {
   entity_name: string;
   token_type: string;
   transaction_type: string;
+  date?: string;
 }
 
 export interface AppState {

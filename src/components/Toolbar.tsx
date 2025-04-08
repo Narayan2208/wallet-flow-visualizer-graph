@@ -10,11 +10,14 @@ import {
   PanelRightClose,
   Sun,
   Moon,
-  Download
+  Download,
+  RefreshCw,
+  Layout
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
 import { updateViewport, toggleTheme, clearGraph } from '../store/walletSlice';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/use-toast';
 
 interface ToolbarProps {
   onToggleLeftSidebar: () => void;
@@ -42,6 +45,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   
   const handleResetView = () => {
     dispatch(updateViewport({ scale: 1, translateX: 0, translateY: 0 }));
+    toast({
+      title: "View Reset",
+      description: "The graph view has been reset to default",
+    });
   };
   
   const handleToggleTheme = () => {
@@ -51,39 +58,48 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const handleClearGraph = () => {
     if (window.confirm('Are you sure you want to clear the graph?')) {
       dispatch(clearGraph());
+      toast({
+        title: "Graph Cleared",
+        description: "All nodes and connections have been removed",
+        variant: "destructive"
+      });
     }
   };
   
   return (
     <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
       <div className="flex items-center space-x-1">
-        <Button variant="ghost" size="sm" onClick={onToggleLeftSidebar}>
+        <Button variant="ghost" size="sm" onClick={onToggleLeftSidebar} title="Toggle Wallet Panel">
           <PanelLeftClose className="h-4 w-4" />
         </Button>
         
         <Separator orientation="vertical" className="h-6 mx-1" />
         
-        <Button variant="ghost" size="sm" onClick={handleZoomIn}>
+        <Button variant="ghost" size="sm" onClick={handleZoomIn} title="Zoom In">
           <ZoomIn className="h-4 w-4" />
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={handleZoomOut}>
+        <Button variant="ghost" size="sm" onClick={handleZoomOut} title="Zoom Out">
           <ZoomOut className="h-4 w-4" />
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={handleResetView}>
+        <Button variant="ghost" size="sm" onClick={handleResetView} title="Reset View">
           <Move className="h-4 w-4" />
+        </Button>
+
+        <Button variant="ghost" size="sm" title="Auto-Layout Graph">
+          <Layout className="h-4 w-4" />
         </Button>
       </div>
       
       <h1 className="font-bold text-lg">Wallet Flow Visualizer</h1>
       
       <div className="flex items-center space-x-1">
-        <Button variant="ghost" size="sm" onClick={onExportSvg}>
+        <Button variant="ghost" size="sm" onClick={onExportSvg} title="Export SVG">
           <Download className="h-4 w-4" />
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={handleToggleTheme}>
+        <Button variant="ghost" size="sm" onClick={handleToggleTheme} title="Toggle Light/Dark Mode">
           {theme === 'light' ? (
             <Moon className="h-4 w-4" />
           ) : (
@@ -93,11 +109,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
         
         <Separator orientation="vertical" className="h-6 mx-1" />
         
-        <Button variant="outline" size="sm" onClick={handleClearGraph}>
-          Clear
+        <Button variant="outline" size="sm" onClick={handleClearGraph} title="Clear Graph">
+          <RefreshCw className="h-4 w-4 mr-1" /> Clear
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={onToggleRightSidebar}>
+        <Button variant="ghost" size="sm" onClick={onToggleRightSidebar} title="Toggle Details Panel">
           <PanelRightClose className="h-4 w-4" />
         </Button>
       </div>
