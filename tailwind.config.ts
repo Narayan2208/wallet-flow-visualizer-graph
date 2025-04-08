@@ -65,19 +65,24 @@ export default {
 				},
 				// Custom colors for the wallet flow visualizer
 				inflow: {
-					DEFAULT: '#3b82f6', // blue-500
-					light: '#93c5fd', // blue-300
-					dark: '#1d4ed8', // blue-700
+					DEFAULT: '#22d3ee', // cyan-400
+					light: '#67e8f9', // cyan-300
+					dark: '#06b6d4', // cyan-500
 				},
 				outflow: {
-					DEFAULT: '#ef4444', // red-500
-					light: '#fca5a5', // red-300
-					dark: '#b91c1c', // red-700
+					DEFAULT: '#f43f5e', // red-500
+					light: '#fb7185', // red-300
+					dark: '#e11d48', // red-600
 				},
 				wallet: {
 					DEFAULT: '#6366f1', // indigo-500
 					light: '#a5b4fc', // indigo-300 
 					dark: '#4338ca', // indigo-700
+				},
+				exchange: {
+					DEFAULT: '#f97316', // orange-500
+					light: '#fb923c', // orange-400
+					dark: '#ea580c', // orange-600
 				}
 			},
 			borderRadius: {
@@ -114,6 +119,10 @@ export default {
 				'fade-in': 'fade-in 0.2s ease-out',
 				'fade-out': 'fade-out 0.2s ease-out',
 				'node-selected': 'node-selected 0.3s ease-in-out'
+			},
+			strokeWidth: {
+				'3': '3px',
+				'4': '4px',
 			}
 		}
 	},
