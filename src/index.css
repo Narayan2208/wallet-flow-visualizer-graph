@@ -98,7 +98,7 @@
 /* Custom styles for the wallet flow visualizer */
 @layer components {
   .graph-container {
-    @apply relative w-full h-full overflow-hidden bg-black;
+    @apply relative w-full h-full overflow-hidden bg-muted/30;
   }
   
   .wallet-node {
@@ -110,19 +110,11 @@
   }
   
   .wallet-node.selected {
-    @apply animate-node-selected;
+    @apply animate-node-selected ring-2 ring-primary;
   }
   
   .edge {
     @apply transition-all duration-200;
-  }
-  
-  .stroke-dashed {
-    stroke-dasharray: 5, 5;
-  }
-  
-  .stroke-dotted {
-    stroke-dasharray: 2, 2;
   }
   
   .inflow-edge {

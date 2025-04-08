@@ -3,36 +3,12 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../hooks/useAppSelector';
 import { updateViewport, selectNode, updateNodePosition } from '../store/walletSlice';
 import { WalletNode as WalletNodeType } from '../types/wallet';
-import { MoreVertical } from 'lucide-react';
 
 const WalletNode: React.FC<{
   node: WalletNodeType;
   isSelected: boolean;
   onClick: () => void;
 }> = ({ node, isSelected, onClick }) => {
-  // Determine node color based on entity name or transaction type
-  const getNodeColor = () => {
-    if (node.entityName.toLowerCase().includes('changenow')) {
-      return 'bg-orange-400 hover:bg-orange-500';
-    } else if (node.entityName.toLowerCase().includes('whitebit')) {
-      return 'bg-purple-300 hover:bg-purple-400';
-    } else if (node.address.startsWith('bc1qp')) {
-      return 'bg-pink-300 hover:bg-pink-400';
-    } else if (node.address.startsWith('bc1q7l')) {
-      return 'bg-pink-300 hover:bg-pink-400';
-    } else {
-      return 'bg-green-400 hover:bg-green-500';
-    }
-  };
-
-  // Format address to show only a portion if it's too long
-  const formatAddress = (address: string) => {
-    if (address.length > 16) {
-      return address.substring(0, 8) + '...' + address.substring(address.length - 8);
-    }
-    return address;
-  };
-
   return (
     <g
       transform={`translate(${node.x}, ${node.y})`}
@@ -42,99 +18,70 @@ const WalletNode: React.FC<{
         onClick();
       }}
     >
-      {/* Node main body */}
       <rect
-        width="180"
-        height="40"
-        rx="20"
-        ry="20"
-        className={`${getNodeColor()} stroke-none shadow-xl ${
-          isSelected ? 'ring-2 ring-white' : ''
+        width="120"
+        height="80"
+        rx="10"
+        ry="10"
+        className={`fill-card stroke-primary stroke-2 shadow-md ${
+          isSelected ? 'stroke-[3px]' : ''
         }`}
-        x="-90"
-        y="-20"
+        x="-60"
+        y="-40"
       />
-      
-      {/* Entity name text */}
       <text
         textAnchor="middle"
-        className="fill-gray-900 text-sm font-medium"
-        y="5"
+        className="fill-foreground text-xs font-medium"
+        y="-20"
       >
-        {node.entityName || formatAddress(node.address)}
+        {node.address.substring(0, 10)}...
       </text>
-      
-      {/* Options button */}
-      <g transform="translate(70, 0)" className="cursor-pointer">
-        <circle r="10" fill="rgba(255,255,255,0.2)" />
-        <foreignObject width="20" height="20" x="-10" y="-10">
-          <div className="flex items-center justify-center h-full">
-            <MoreVertical size={14} className="text-gray-900" />
-          </div>
-        </foreignObject>
-      </g>
+      <text
+        textAnchor="middle"
+        className="fill-foreground text-xs"
+        y="0"
+      >
+        {node.entityName}
+      </text>
+      <text
+        textAnchor="middle"
+        className="fill-primary text-xs font-semibold"
+        y="20"
+      >
+        {node.amount.toFixed(8)} {node.tokenType}
+      </text>
+      <circle
+        r="3"
+        className="fill-primary"
+        cx="-60"
+      />
+      <circle
+        r="3"
+        className="fill-primary"
+        cx="60"
+      />
     </g>
   );
 };
 
-const TransactionEdge: React.FC<{
+const Edge: React.FC<{
   sourceX: number;
   sourceY: number;
   targetX: number;
   targetY: number;
   type: 'inflow' | 'outflow';
-  amount: number;
-  tokenType: string;
-}> = ({ sourceX, sourceY, targetX, targetY, type, amount, tokenType }) => {
-  const edgeClass = type === 'inflow' ? 'stroke-cyan-400' : 'stroke-red-500';
-  const strokeClass = type === 'inflow' ? 'stroke-dashed' : 'stroke-dotted';
-  
-  // Calculate the midpoint for the label
-  const midX = (sourceX + targetX) / 2;
-  const midY = (sourceY + targetY) / 2;
-
-  // Calculate angle for proper label orientation
-  const angle = Math.atan2(targetY - sourceY, targetX - sourceX) * 180 / Math.PI;
-
-  // Add a slight curve to the path
-  const curveOffset = 30;
-  const controlX = (sourceX + targetX) / 2;
-  const controlY = (sourceY + targetY) / 2 - curveOffset;
-
-  // Create path for curved line
-  const path = `M${sourceX},${sourceY} Q${controlX},${controlY} ${targetX},${targetY}`;
+}> = ({ sourceX, sourceY, targetX, targetY, type }) => {
+  const edgeClass = type === 'inflow' ? 'inflow-edge' : 'outflow-edge';
   
   return (
-    <>
-      <path
-        d={path}
-        className={`${edgeClass} stroke-2 ${strokeClass} fill-none`}
-        strokeDasharray={type === 'inflow' ? "5,5" : "3,3"}
-        markerEnd={`url(#arrowhead-${type})`}
-      />
-
-      {/* Transaction label */}
-      <foreignObject
-        x={midX - 100}
-        y={midY - 15}
-        width="200"
-        height="30"
-        className="overflow-visible pointer-events-none"
-      >
-        <div 
-          className={`px-3 py-1 rounded-full text-xs font-medium inline-block
-                     ${type === 'inflow' ? 'bg-white text-black' : 'bg-pink-300 text-black'}`}
-          style={{
-            transform: `rotate(${angle}deg)`,
-            whiteSpace: 'nowrap',
-            display: 'inline-block',
-            maxWidth: 'fit-content'
-          }}
-        >
-          {amount.toFixed(8)} {tokenType} {type === 'inflow' ? '→' : '→'}
-        </div>
-      </foreignObject>
-    </>
+    <line
+      x1={sourceX}
+      y1={sourceY}
+      x2={targetX}
+      y2={targetY}
+      className={`edge ${edgeClass} stroke-2`}
+      markerEnd="url(#arrowhead)"
+    />
   );
 };
 
@@ -237,7 +184,7 @@ const WalletGraph: React.FC = () => {
   };
   
   return (
-    <div className="graph-container w-full h-full bg-black">
+    <div className="graph-container w-full h-full">
       <svg
         ref={svgRef}
         className="w-full h-full"
@@ -249,7 +196,7 @@ const WalletGraph: React.FC = () => {
       >
         <defs>
           <marker
-            id="arrowhead-inflow"
+            id="arrowhead"
             markerWidth="10"
             markerHeight="7"
             refX="9"
@@ -258,27 +205,44 @@ const WalletGraph: React.FC = () => {
           >
             <polygon 
               points="0 0, 10 3.5, 0 7" 
-              className="fill-cyan-400" 
-            />
-          </marker>
-          <marker
-            id="arrowhead-outflow"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon 
-              points="0 0, 10 3.5, 0 7" 
-              className="fill-red-500" 
+              className="fill-primary" 
             />
           </marker>
         </defs>
         
         <g transform={`translate(${viewport.translateX}, ${viewport.translateY}) scale(${viewport.scale})`}>
-          {/* Background image or pattern - faint grid lines */}
-          <g className="grid-lines opacity-5">
+          {/* Render edges */}
+          {graph.edges.map(edge => {
+            const sourceNode = graph.nodes.find(n => n.id === edge.source);
+            const targetNode = graph.nodes.find(n => n.id === edge.target);
+            
+            if (sourceNode && targetNode) {
+              return (
+                <Edge
+                  key={edge.id}
+                  sourceX={sourceNode.x}
+                  sourceY={sourceNode.y}
+                  targetX={targetNode.x}
+                  targetY={targetNode.y}
+                  type={edge.type}
+                />
+              );
+            }
+            return null;
+          })}
+          
+          {/* Render nodes */}
+          {graph.nodes.map(node => (
+            <WalletNode
+              key={node.id}
+              node={node}
+              isSelected={node.id === selectedNode}
+              onClick={() => dispatch(selectNode(node.id))}
+            />
+          ))}
+          
+          {/* Grid lines for reference (optional) */}
+          <g className="grid-lines opacity-10">
             {[...Array(40)].map((_, i) => (
               <line
                 key={`h-${i}`}
@@ -302,83 +266,8 @@ const WalletGraph: React.FC = () => {
               />
             ))}
           </g>
-          
-          {/* Render edges */}
-          {graph.edges.map(edge => {
-            const sourceNode = graph.nodes.find(n => n.id === edge.source);
-            const targetNode = graph.nodes.find(n => n.id === edge.target);
-            
-            if (sourceNode && targetNode) {
-              return (
-                <TransactionEdge
-                  key={edge.id}
-                  sourceX={sourceNode.x}
-                  sourceY={sourceNode.y}
-                  targetX={targetNode.x}
-                  targetY={targetNode.y}
-                  type={edge.type}
-                  amount={edge.amount}
-                  tokenType={sourceNode.tokenType}
-                />
-              );
-            }
-            return null;
-          })}
-          
-          {/* Render nodes */}
-          {graph.nodes.map(node => (
-            <WalletNode
-              key={node.id}
-              node={node}
-              isSelected={node.id === selectedNode}
-              onClick={() => dispatch(selectNode(node.id))}
-            />
-          ))}
         </g>
       </svg>
-      
-      {/* Minimap (bottom right corner) */}
-      <div className="absolute bottom-4 right-4 w-32 h-32 bg-black/30 border border-gray-700 rounded-md overflow-hidden">
-        <svg className="w-full h-full" viewBox="-500 -300 1000 600">
-          {graph.nodes.map(node => {
-            // Determine node color for minimap
-            let color = "#10B981"; // green by default
-            if (node.entityName.toLowerCase().includes('changenow')) {
-              color = "#FB923C"; // orange
-            } else if (node.entityName.toLowerCase().includes('whitebit')) {
-              color = "#C084FC"; // purple
-            } else if (node.address.startsWith('bc1qp') || node.address.startsWith('bc1q7l')) {
-              color = "#F9A8D4"; // pink
-            }
-            
-            return (
-              <circle
-                key={`mini-${node.id}`}
-                cx={node.x / 10}
-                cy={node.y / 10}
-                r={3}
-                fill={color}
-              />
-            );
-          })}
-        </svg>
-      </div>
-      
-      {/* Zoom controls (left side) */}
-      <div className="absolute left-4 bottom-1/3 flex flex-col gap-2">
-        <button className="w-8 h-8 bg-black/50 border border-gray-700 text-white flex items-center justify-center rounded-md">
-          +
-        </button>
-        <button className="w-8 h-8 bg-black/50 border border-gray-700 text-white flex items-center justify-center rounded-md">
-          −
-        </button>
-        <button className="w-8 h-8 bg-black/50 border border-gray-700 text-white flex items-center justify-center rounded-md">
-          ⤢
-        </button>
-        <button className="w-8 h-8 bg-black/50 border border-gray-700 text-white flex items-center justify-center rounded-md">
-          🔒
-        </button>
-      </div>
     </div>
   );
 };
