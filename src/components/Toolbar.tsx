@@ -12,12 +12,14 @@ import {
   Moon,
   Download,
   RefreshCw,
-  Layout
+  Layout,
+  Network
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppSelector';
 import { updateViewport, toggleTheme, clearGraph } from '../store/walletSlice';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
+import { arrangeNodesInTreeLayout } from '../utils/graphLayout';
 
 interface ToolbarProps {
   onToggleLeftSidebar: () => void;
@@ -31,7 +33,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onExportSvg
 }) => {
   const dispatch = useAppDispatch();
-  const { viewport, theme } = useAppSelector(state => state.wallet);
+  const { viewport, theme, graph } = useAppSelector(state => state.wallet);
   
   const handleZoomIn = () => {
     const newScale = Math.min(viewport.scale * 1.2, 5);
@@ -66,8 +68,31 @@ const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
   
+  const handleAutoLayout = () => {
+    if (graph.nodes.length > 0) {
+      const arrangedNodes = arrangeNodesInTreeLayout(graph.nodes, graph.edges);
+      arrangedNodes.forEach(node => {
+        dispatch({ 
+          type: 'wallet/updateNodePosition', 
+          payload: { id: node.id, x: node.x, y: node.y } 
+        });
+      });
+      
+      toast({
+        title: "Graph Auto-Arranged",
+        description: "Nodes have been automatically arranged for better visibility",
+      });
+    } else {
+      toast({
+        title: "No Nodes Present",
+        description: "Add some nodes to use the auto-arrange feature",
+        variant: "destructive"
+      });
+    }
+  };
+  
   return (
-    <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
+    <div className="bg-card/80 backdrop-blur border-b shadow-md p-2 flex items-center justify-between">
       <div className="flex items-center space-x-1">
         <Button variant="ghost" size="sm" onClick={onToggleLeftSidebar} title="Toggle Wallet Panel">
           <PanelLeftClose className="h-4 w-4" />
@@ -87,12 +112,14 @@ const Toolbar: React.FC<ToolbarProps> = ({
           <Move className="h-4 w-4" />
         </Button>
 
-        <Button variant="ghost" size="sm" title="Auto-Layout Graph">
+        <Button variant="ghost" size="sm" onClick={handleAutoLayout} title="Auto-Layout Graph">
           <Layout className="h-4 w-4" />
         </Button>
+        
+        <Button variant="outline" size="sm" className="ml-2 bg-primary/10">
+          <Network className="h-4 w-4 mr-1" /> Wallet Flow
+        </Button>
       </div>
-      
-      <h1 className="font-bold text-lg">Wallet Flow Visualizer</h1>
       
       <div className="flex items-center space-x-1">
         <Button variant="ghost" size="sm" onClick={onExportSvg} title="Export SVG">
@@ -109,7 +136,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
         
         <Separator orientation="vertical" className="h-6 mx-1" />
         
-        <Button variant="outline" size="sm" onClick={handleClearGraph} title="Clear Graph">
+        <Button variant="outline" size="sm" onClick={handleClearGraph} title="Clear Graph" className="text-destructive border-destructive/20 hover:bg-destructive/10">
           <RefreshCw className="h-4 w-4 mr-1" /> Clear
         </Button>
         
